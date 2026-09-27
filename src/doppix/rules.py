@@ -45,6 +45,8 @@ P = {
     "fty_max_sec": 8.0,
     # stopped_vehicle / congestion
     "sv_min_sec": 10.0,
+    "sv_yield_share": 0.8,       # to'xtash vaqtining shuncha qismida yonidagi zebrada yurayotgan piyoda bo'lsa ...
+    "sv_yield_max_sec": 20.0,    # ... va to'xtash shundan qisqa bo'lsa — piyodaga yo'l bermoqda, turib qolmagan
     "cg_min_vehicles": 3,
     "cg_min_sec": 8.0,
     # stop_line
@@ -265,13 +267,42 @@ def congestion_and_stopped(ctx: Ctx):
     cong = [(s, e) for s, e in merge(mask_to_intervals(times, count >= P["cg_min_vehicles"]), 2.0)
             if e - s >= P["cg_min_sec"]]
     single = []
+    peds = None
     for veh, s, e in stops:
         if e - s < P["sv_min_sec"]:
             continue
         overlap = sum(max(0.0, min(e, ce) - max(s, cs)) for cs, ce in cong)
-        if overlap < 0.5 * (e - s):
-            single.append((s, e))
+        if overlap >= 0.5 * (e - s):
+            continue
+        if e - s < P["sv_yield_max_sec"]:
+            peds = _walking_on_crosswalks(ctx) if peds is None else peds
+            if _yield_share(veh, s, e, peds) >= P["sv_yield_share"]:
+                continue                        # piyodalarga yo'l berib kutyapti
+        single.append((s, e))
     return cong, single
+
+
+def _walking_on_crosswalks(ctx: Ctx) -> dict:
+    """Vaqt (0.01 s) -> zebra ustida yurib ketayotgan piyodalarning oyoq nuqtalari."""
+    out: dict[float, list[np.ndarray]] = {}
+    for tr in ctx.by_cls((config.PERSON,)):
+        rel = _rel_speed(tr)
+        on = np.zeros(len(tr.t), bool)
+        for cw in ctx.scene.crosswalks:
+            on |= inside(cw, tr.foot, -10)
+        for t, f in zip(tr.t[on & (rel > 0.2) & (rel < P["ped_max_rel_speed"])], tr.foot[on & (rel > 0.2) & (rel < P["ped_max_rel_speed"])]):
+            out.setdefault(round(float(t), 2), []).append(f)
+    return out
+
+
+def _yield_share(veh: Track, s: float, e: float, peds: dict) -> float:
+    """To'xtash vaqtining qancha qismida mashina yonida (boxidan 1 mashina o'lchami ichida) zebrada piyoda yurgan."""
+    m = (veh.t >= s) & (veh.t <= e)
+    hit = []
+    for t, b in zip(veh.t[m], veh.box[m]):
+        w = max(b[2] - b[0], b[3] - b[1])
+        hit.append(any(b[0] - w <= f[0] <= b[2] + w and b[1] - w <= f[1] <= b[3] + w for f in peds.get(round(float(t), 2), ())))
+    return float(np.mean(hit)) if hit else 0.0
 
 
 # ── Svetofor bilan bog'liq ────────────────────────────────────────────

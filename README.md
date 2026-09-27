@@ -94,7 +94,7 @@ thresholds are for the 1920-px frame.
 |---|---|
 | `red_light` | a vehicle's foot crosses the stop line while the governing light is red. The first 1 s after a phase change is ignored because the light state lags. |
 | `stop_line` | a vehicle stands still on/over the stop line for ≥ 3 s |
-| `stopped_vehicle` | a single vehicle is stationary for ≥ 10 s on the carriageway, outside a queue |
+| `stopped_vehicle` | a single vehicle is stationary for ≥ 10 s on the carriageway, outside a queue. A short stop (< 20 s) with walking pedestrians next to it on a crosswalk for ≥ 80 % of the time is the car yielding, not a stopped vehicle. |
 | `congestion` | ≥ 3 stationary vehicles in the intersection approach at once, for ≥ 8 s |
 | `jaywalking` | a moving pedestrian on the carriageway for ≥ 1 s who is more than 60 px from any crosswalk and not on an island. Riders on bikes or motorcycles are excluded, as are tiny far-away people (box height < 45 px). Walking across an island does not break a crossing into two events, but walking only on an island is not an event. |
 | `failure_to_yield` | a moving vehicle is inside a crosswalk (0.5–8 s) while a pedestrian on that crosswalk is **in its path**: ahead of it along its velocity and laterally within its width |
