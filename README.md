@@ -125,7 +125,7 @@ the official `evaluate_part_a` run on our labels (`tools/dev_eval.py`).
 
 | Video | Status | Score A |
 |---|---|---|
-| C3896 (5:40) | fully reviewed | 0.82 (harness run with the final detector) |
+| C3896 (5:40) | fully reviewed | 0.80 (`predictions_samples.json` vs our labels) |
 
 ⚠️ These labels were made by reviewing the pipeline's own suggestions
 (accept / fix boundaries / reject / add missed), so the score is optimistic. The
@@ -148,10 +148,10 @@ the unmodified harness on an RTX 3060 + i9-12900F, all 4 sample videos:
 
 | Video | Length | Part A | Part B | Total | × duration |
 |---|---|---|---|---|---|
-| C3896 | 340 s | 325 s | 416 s | 741 s | 2.18 |
-| C3897 | 318 s | 293 s | 325 s | 619 s | 1.95 |
-| C3902 | 318 s | 288 s | 344 s | 632 s | 1.99 |
-| C3905 | 128 s | 120 s | 134 s | 254 s | 1.99 |
+| C3896 | 340 s | 268 s | 350 s | 617 s | 1.81 |
+| C3897 | 318 s | 264 s | 310 s | 575 s | 1.81 |
+| C3902 | 318 s | 276 s | 335 s | 612 s | 1.92 |
+| C3905 | 128 s | 103 s | 130 s | 233 s | 1.83 |
 
 Most of the time goes to decoding the 4K 10-bit 4:2:2 frames on the CPU. The
 harness decodes every frame again for Part B.
