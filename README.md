@@ -241,7 +241,7 @@ were used.
 |---|---|---|
 | Eldor Musayev | Team captain · ML Engineer | YOLO detector: dataset, fine-tuning, evaluation; perception pipeline |
 | Shohruh Gulmirodov | Web Developer | Team website and live demo |
-| Ibodulla Obidjonov | Team member | |
+| Ibodulla Obidjonov | Cybersecurity Engineer · Cyber University | |
 
 Website: https://giyos1212-doppix-traffic.static.hf.space ·
 Repository: https://github.com/ubaydullayevgiyosiddin7-eng/doppix-traffic
