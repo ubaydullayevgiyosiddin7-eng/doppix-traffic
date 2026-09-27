@@ -19,3 +19,9 @@ FRAME_W = 1920
 IMGSZ = 1280
 DET_CONF = 0.1           # ByteTrack ikkinchi bosqichi past ishonchli boxlardan ham foydalanadi
 PART_A_STRIDE_SEC = 0.1  # Part A: ~10 fps (29.97 fps videoda har 3-kadr)
+
+# Vaqt limiti (tashkilotchilar: Part A + Part B birga <= 3 x video davomiyligi).
+# Dastur o'z tezligini kuzatadi: limitga yaqinlashsa kadrlarni siyrakroq oladi (video 0 ball olmasin).
+TIME_FACTOR = 3.0
+PART_A_BUDGET = 1.4      # Part A uchun: davomiylik x shu (qolgani Part B: harness har kadrni o'qiydi)
+TIME_SAFETY = 0.9        # umumiy limitning shu qismini ishlatamiz

@@ -20,7 +20,7 @@ python run_submission.py --videos /data/test --out predictions.json
 python evaluate.py --pred predictions.json --validate-only
 ```
 
-* Weights are in the repo: `weights/detector.pt` (YOLO26m fine-tune, ~44 MB). No internet needed at run time.
+* Weights are in the repo: `weights/detector.pt` (YOLO26m fine-tune, ~44 MB; val mAP@50 0.978, mAP@50-95 0.885). No internet needed at run time.
 * GPU is used automatically when available (fp16), CPU works but is slow.
 * `ultralytics` is pinned to the exact version we tested (8.4.163).
 * `run_submission.py` and `evaluate.py` are the unmodified organizer files.

@@ -65,18 +65,38 @@ class RiskModel:
         self.stride_sec = stride_sec
         self.reset(25.0)
 
-    def reset(self, fps: float) -> None:
+    def reset(self, fps: float, n_frames: int = 0, deadline: float | None = None) -> None:
+        """`deadline` — perf_counter vaqti: shu paytgacha video tugashi kerak (harness'ning vaqt limiti).
+        Kutilgan tugash undan oshsa, detektor qadami oshiriladi; baribir sig'masa — detektor o'chadi."""
         self.fps = fps
-        self.stride = max(1, round(self.stride_sec * fps))
+        self.stride = self.base_stride = max(1, round(self.stride_sec * fps))
         self.state = RiskState()
         self.n = 0
+        self.n_frames = n_frames
+        self.deadline = deadline
+        self._chk: tuple[float, int] | None = None
+        self.detector_on = True
         if getattr(self.model, "predictor", None) is not None and hasattr(self.model.predictor, "trackers"):
             del self.model.predictor.trackers
+
+    def _budget(self, n: int) -> None:
+        import time
+        now = time.perf_counter()
+        if self._chk:
+            rate = (now - self._chk[0]) / max(1, n - self._chk[1])      # s / kadr (harness o'qishi + bizniki)
+            if now + (self.n_frames - n) * rate > self.deadline:
+                if self.stride < 16 * self.base_stride:
+                    self.stride *= 2
+                else:
+                    self.detector_on = False          # faqat harness o'qishi qoladi — video 0 ball olmasin
+        self._chk = (now, n)
 
     def step(self, frame: np.ndarray, t: float) -> float:
         n = self.n
         self.n += 1
-        if n % self.stride:
+        if self.deadline and self.n_frames and n and n % 50 == 0 and self.detector_on:
+            self._budget(n)
+        if n % self.stride or not self.detector_on:
             return self.state.score
         h, w = frame.shape[:2]
         if w > config.FRAME_W:

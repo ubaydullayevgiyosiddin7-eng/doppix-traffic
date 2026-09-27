@@ -6,6 +6,7 @@ sxemasi ham shunday), shuning uchun kadr o'lchamiga bog'liq emas.
 """
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -68,15 +69,19 @@ def _device():
 
 
 def run(video_path: str, stride_sec: float = config.PART_A_STRIDE_SEC, progress=None,
-        max_sec: float | None = None, imgsz: int = config.IMGSZ) -> Perception:
+        max_sec: float | None = None, imgsz: int = config.IMGSZ, budget_sec: float | None = None) -> Perception:
     """Videoni boshidan oxirigacha o'qiydi; har `stride_sec` da bir kadrni detektor+tracker'dan o'tkazadi.
 
     H.264 da kadrga sakrash (seek) qimmat va noaniq — shuning uchun ketma-ket o'qiymiz,
     keraksiz kadrlar faqat grab() qilinadi (rasmga aylantirilmaydi).
     `max_sec` — faqat boshidagi shuncha soniya (sayt demosi uchun); `imgsz` — detektor kirish o'lchami.
+    `budget_sec` — shu vaqtga sig'ish kerak: kutilgan tugash vaqti oshib ketsa, qadam ikki barobar oshiriladi.
     """
+    import time
+    t_start = time.perf_counter()
     model = load_detector()
     dev = _device()
+    cv2.setNumThreads(os.cpu_count() or 1)   # ba'zi OpenCV build'larida standart — 1 oqim (resize sekin)
     cap = cv2.VideoCapture(str(video_path))
     if not cap.isOpened():
         raise RuntimeError(f"cannot open {video_path}")
@@ -86,7 +91,9 @@ def run(video_path: str, stride_sec: float = config.PART_A_STRIDE_SEC, progress=
     limit = int(max_sec * fps) if max_sec is not None else None   # None — video oxirigacha
     if limit is not None and n_frames > 0:
         n_frames = min(n_frames, limit)
-    stride = max(1, round(stride_sec * fps))
+    stride = base_stride = max(1, round(stride_sec * fps))
+    stride_changes: list[tuple[int, int]] = []
+    last_check: tuple[float, int] | None = None
     half_kw = {"quantize": 16} if dev != "cpu" else {}   # GPU'da fp16 — ~2x tez
 
     # ByteTrack holati har video uchun yangidan boshlanadi
@@ -125,6 +132,15 @@ def run(video_path: str, stride_sec: float = config.PART_A_STRIDE_SEC, progress=
                     rows.append((k, ids[i], cls[i], conf[i], *xyxyn[i]))
             if progress and k % 10 == 0:
                 progress(idx, n_frames)
+            if budget_sec and n_frames > 0 and k and k % 10 == 0:
+                now = time.perf_counter()
+                if last_check:
+                    rate = (now - last_check[0]) / max(1, idx - last_check[1])   # s / video kadr (hozirgi qadamda)
+                    projected = (now - t_start) + (n_frames - idx) * rate
+                    if projected > budget_sec and stride < 8 * base_stride:
+                        stride *= 2             # sekinlik: kadrlarni siyrakroq olamiz
+                        stride_changes.append((idx, stride))
+                last_check = (now, idx)
             idx += 1
     finally:
         cap.release()
