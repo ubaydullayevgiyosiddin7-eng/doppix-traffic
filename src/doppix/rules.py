@@ -24,6 +24,9 @@ P = {
     # jaywalking
     "jw_min_sec": 1.0,
     "jw_core_sec": 0.5,          # orolcha orqali o'tganda ham qatnov qismining o'zida kamida shuncha s
+    "jw_along_near_h": 1.2,      # zebraga shuncha bo'y yaqin ...
+    "jw_along_cos": 0.85,        # ... va zebra o'qiga parallel (|cos| dan katta) yurgan kadrlar ...
+    "jw_along_max": 0.7,         # ... ulushi shundan ko'p bo'lsa — zebra yoqalab yurgan, jaywalking emas
     "ped_max_rel_speed": 2.0,    # bo'y/s: piyoda ~0.3-1, samokat/skuterdagi odam 2.5+ (detektorda samokat klassi yo'q)
     "jw_cross_margin": 60.0,     # zebradan ~1 mashina kengligi uzoqda bo'lsin (zebra cheti hisoblanmaydi)
     "jw_road_margin": 15.0,      # yo'l chegarasidan shuncha px ichkarida
@@ -113,9 +116,29 @@ def jaywalking(ctx: Ctx):
             m = (tr.t >= s) & (tr.t <= e)
             tc = tr.t[m & core]
             # faqat orolchada yurish — hodisa emas: yo'lning o'zida ham kamida jw_core_sec bo'lsin
-            if e - s >= P["jw_min_sec"] and len(tc) and tc[-1] - tc[0] >= P["jw_core_sec"]                     and np.median(rel[m]) <= P["ped_max_rel_speed"]:     # samokatchi — piyoda emas
+            if e - s >= P["jw_min_sec"] and len(tc) and tc[-1] - tc[0] >= P["jw_core_sec"]                     and np.median(rel[m]) <= P["ped_max_rel_speed"]                     and _along_share(ctx.scene.crosswalks, tr, m) <= P["jw_along_max"]:
                 out.append((s, e))
     return out
+
+
+def _along_share(crosswalks, tr: Track, m: np.ndarray) -> float:
+    """Oraliqdagi kadrlarning qancha qismida piyoda zebra yonida (jw_along_near_h bo'y ichida) va unga
+    parallel yurgan. Zebra yoqalab yurish (samokat/odamlar ko'p paytda chetdan) — zebradan foydalanish;
+    haqiqiy jaywalking esa yo'lni qiya kesadi (namunalarda <= 0.67, zebra yoqalab yurganlarda >= 0.72)."""
+    import cv2
+    if not crosswalks or not m.any():
+        return 0.0
+    f, v, h = tr.foot[m], _velocity(tr)[m], tr.height[m]
+    d = np.array([[cv2.pointPolygonTest(cw.reshape(-1, 1, 2), (float(x), float(y)), True) for cw in crosswalks]
+                  for x, y in f])
+    axes = []
+    for cw in crosswalks:                       # zebraning uzun o'qi — piyodalar yuradigan yo'nalish
+        c = cw - cw.mean(0)
+        axes.append(np.linalg.svd(c, full_matrices=False)[2][0])
+    ax = np.array(axes)[d.argmax(1)]
+    sp = np.linalg.norm(v, axis=1)
+    cos = np.abs((v * ax).sum(1)) / np.maximum(sp, 1e-6)
+    return float(((d.max(1) > -P["jw_along_near_h"] * h) & (cos > P["jw_along_cos"])).mean())
 
 
 def _rel_speed(tr: Track) -> np.ndarray:
