@@ -6,3 +6,5 @@ venv/
 predictions.json
 runs/
 *.log
+training/dataset/images/
+training/runs/
