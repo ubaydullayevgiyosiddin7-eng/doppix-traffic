@@ -1,0 +1,6 @@
+numpy>=1.24
+opencv-python-headless>=4.8
+torch>=2.2
+torchvision>=0.17
+ultralytics>=8.4.0
+lap>=0.5.12      # ByteTrack uchun; bo'lmasa ultralytics uni internetdan o'rnatmoqchi bo'ladi (offline'da xato)
