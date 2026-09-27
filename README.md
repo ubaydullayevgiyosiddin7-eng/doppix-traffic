@@ -148,6 +148,25 @@ Rules that came out of reviewing the errors:
 * Walking alongside a crosswalk, just off its painted edge, is not jaywalking.
 * A car stopped briefly for crossing pedestrians is not a stopped vehicle.
 
+### Ablations (`tools/ablation.py`)
+
+Score A on our labels, from the same cached detections:
+
+| Variant | Score A |
+|---|---|
+| Full pipeline | 0.828 |
+| ~5 fps (every 2nd processed frame) | 0.827 |
+| ~3.3 fps (every 3rd) | 0.742 |
+| No camera-shift alignment | 0.708 |
+| failure_to_yield without the signal rule | 0.820 |
+| failure_to_yield without walking / creeping thresholds | 0.809 |
+| jaywalking without the "alongside crosswalk" filter | 0.810 |
+| jaywalking without the scooter-speed filter | 0.822 |
+| stopped_vehicle without the "yielding to pedestrians" filter | 0.813 |
+
+Camera alignment matters most. Dropping to 5 fps costs almost nothing, so if the
+time-budget guard thins the frames on a slow machine, little accuracy is lost.
+
 ## Training the detector (reproducible)
 
 ```bash
