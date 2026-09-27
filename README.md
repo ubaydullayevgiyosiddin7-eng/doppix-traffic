@@ -182,15 +182,18 @@ were used.
   * The pipeline's suggestions can be accepted or rejected in one click.
   * A scene editor for polygons and lines.
   * A bounding-box labeler with model pre-labels and YOLO/COCO export.
-* **Website**: sample-video visualisations, EDA, live demo — link below.
+* **Website**: sample-video visualisations, EDA, and a live demo (upload an MP4) — https://giyos1212-doppix-traffic.static.hf.space
 
 ## Team
 
-| Member | Role | Contributions |
-|---|---|---|
-| *TBD* | | |
+| Member | Role |
+|---|---|
+| Eldor Musayev | Team captain |
+| Soibnazar Berdimurodov | Team member |
+| Shohruh Gulmirodov | Team member |
 
-Website: *TBD* · Repository: *TBD*
+Website: https://giyos1212-doppix-traffic.static.hf.space ·
+Repository: https://github.com/ubaydullayevgiyosiddin7-eng/doppix-traffic
 
 ## Acknowledgements
 
