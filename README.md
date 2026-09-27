@@ -237,11 +237,11 @@ were used.
 
 ## Team
 
-| Member | Role |
-|---|---|
-| Eldor Musayev | Team captain |
-| Soibnazar Berdimurodov | Team member |
-| Shohruh Gulmirodov | Team member |
+| Member | Role | Contributions |
+|---|---|---|
+| Eldor Musayev | Team captain · ML Engineer | YOLO detector: dataset, fine-tuning, evaluation; perception pipeline |
+| Shohruh Gulmirodov | Web Developer | Team website and live demo |
+| Soibnazar Berdimurodov | Team member | |
 
 Website: https://giyos1212-doppix-traffic.static.hf.space ·
 Repository: https://github.com/ubaydullayevgiyosiddin7-eng/doppix-traffic
