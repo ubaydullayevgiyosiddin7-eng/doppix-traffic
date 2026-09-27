@@ -6,7 +6,7 @@ import numpy as np
 
 def mask_to_intervals(times: np.ndarray, mask: np.ndarray) -> list[tuple[float, float]]:
     """Ketma-ket True bo'lgan joylar -> [(boshi, oxiri)]. Oxiri — oxirgi True kadr vaqti."""
-    out, start = [], None
+    out, start, prev = [], None, None
     for t, m in zip(times, mask):
         if m and start is None:
             start = t

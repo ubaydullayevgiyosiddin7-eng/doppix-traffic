@@ -1,6 +1,12 @@
-"""Part B xom xavf taqsimoti (kalibrlash uchun): oddiy harakatda qanday qiymatlar chiqadi."""
+"""Part B kalibrlash: oddiy (avariyasiz) harakatda xom xavf bahosi qanday taqsimlangan.
+
+risk.NORMAL_MAX shu taqsimotning ~99.9-foizilidan olingan: undan past xom baholar [0, 0.45] ga siqiladi.
+
+    python tools/risk_stats.py --cache ../02_data/cache_v2
+"""
+import argparse
 import sys
-from collections import defaultdict, deque
+from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
@@ -10,32 +16,27 @@ from doppix import config, risk  # noqa: E402
 from doppix.perception import CLS, CONF, K, TID, X1, X2, Y1, Y2, Perception  # noqa: E402
 from doppix.scene import H, W  # noqa: E402
 
-allraw = []
-for npz in sorted(Path(sys.argv[1]).glob("*.npz")):
+ap = argparse.ArgumentParser()
+ap.add_argument("--cache", required=True)
+args = ap.parse_args()
+
+raw_all = []
+for npz in sorted(Path(args.cache).glob("*.npz")):
     p = Perception.load(npz)
-    times = p.times
     d = p.dets[np.isin(p.dets[:, CLS], [config.PERSON, *config.VEHICLES]) & (p.dets[:, CONF] >= 0.3)]
     by_k = defaultdict(list)
     for r in d:
-        by_k[int(r[K])].append(r)
-    hist = defaultdict(lambda: deque(maxlen=16))
-    for k in range(0, len(times), 2):
-        t = times[k]
-        objs = []
-        for r in by_k.get(k, []):
-            hist[int(r[TID])].append((t, r[[X1, Y1, X2, Y2]] * [W, H, W, H]))
-            objs.append((int(r[TID]), int(r[CLS])))
-        st = []
-        for tid, cls in objs:
-            h = [x for x in hist[tid] if t - x[0] <= risk.HIST_SEC + 1e-6]
-            if len(h) < 3 or h[-1][0] - h[0][0] < 0.3:
-                continue
-            (t0, b0), (t1, b1) = h[0], h[-1]
-            c0 = np.array([(b0[0] + b0[2]) / 2, (b0[1] + b0[3]) / 2])
-            c1 = np.array([(b1[0] + b1[2]) / 2, (b1[1] + b1[3]) / 2])
-            st.append((cls, b1, c1, (c1 - c0) / (t1 - t0)))
-        allraw.append(risk.pair_risk(st))
-a = np.array(allraw)
-print(f"qadamlar: {len(a)}, >0: {100 * (a > 0).mean():.1f}%")
-for q in [50, 90, 95, 99, 99.5, 99.9, 100]:
-    print(f"  {q:5}-foizil: {np.percentile(a, q):.3f}")
+        by_k[int(r[K])].append((int(r[TID]), int(r[CLS]), r[[X1, Y1, X2, Y2]] * [W, H, W, H]))
+    st = risk.RiskState()
+    for k in range(0, len(p.times), 2):                  # ~5 fps, RiskModel bilan bir xil
+        t, objs = float(p.times[k]), by_k.get(k, [])
+        for tid, _, box in objs:
+            st.hist[tid].append((t, np.asarray(box, dtype=np.float32)))
+        states = [(cls, *s) for tid, cls, _ in objs if (s := st._state(tid, t)) is not None]
+        raw_all.append(risk.pair_risk(states))
+raw = np.array(raw_all)
+nz = raw[raw > 0]
+print(f"{len(raw)} qadam, nolga teng bo'lmagani {100 * len(nz) / max(1, len(raw)):.1f}%")
+for q in (50, 90, 99, 99.9, 100):
+    print(f"  {q:5}-foizil (nol bo'lmaganlar): {np.percentile(nz, q) if len(nz) else 0:.3f}")
+print(f"risk.NORMAL_MAX = {risk.NORMAL_MAX}")

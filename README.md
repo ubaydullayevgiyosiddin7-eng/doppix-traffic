@@ -94,11 +94,11 @@ thresholds are for the 1920-px frame.
 | Class | Rule |
 |---|---|
 | `red_light` | a vehicle's foot crosses the stop line while the governing light is red. The first 1 s after a phase change is ignored because the light state lags. |
-| `stop_line` | a vehicle stands still on/over the stop line for ≥ 3 s |
+| `stop_line` | while the light is red, a vehicle stands still for ≥ 3 s past the stop line but before the intersection (on the crosswalk band). The event ends when the light turns green. |
 | `stopped_vehicle` | a single vehicle is stationary for ≥ 10 s on the carriageway, outside a queue. A short stop (< 20 s) with walking pedestrians next to it on a crosswalk for ≥ 80 % of the time is the car yielding, not a stopped vehicle. |
 | `congestion` | ≥ 3 stationary vehicles in the intersection approach at once, for ≥ 8 s |
-| `jaywalking` | a moving pedestrian on the carriageway for ≥ 1 s who is more than 60 px from any crosswalk and not on an island. Riders on bikes or motorcycles are excluded, as are tiny far-away people (box height < 45 px). Walking across an island does not break a crossing into two events, but walking only on an island is not an event. |
-| `failure_to_yield` | a moving vehicle is inside a crosswalk (0.5–8 s) while a pedestrian on that crosswalk is **in its path**: ahead of it along its velocity and laterally within its width |
+| `jaywalking` | a moving pedestrian on the carriageway for ≥ 1 s who is more than 60 px from any crosswalk and not on an island. The following do not count: riders (bike/motorcycle box, or faster than 2 body heights/s, e.g. scooters); tiny far-away people (box < 45 px); people cut off by the frame edge; people walking alongside a crosswalk (> 70 % of the run parallel to it within 1.2 body heights). Walking across an island does not split a crossing, and walking only on an island is not an event. |
+| `failure_to_yield` | a vehicle drives through a crosswalk (0.5–8 s, ≥ 0.3 car lengths/s, so not creeping) while a walking pedestrian (≥ 0.4 body heights/s) on it is **in its path**: ahead along its velocity and laterally within its width. On the signalised crosswalk this counts only while the vehicle light has been red for ≥ 2 s, because the pedestrian and vehicle signals switch about 2 s apart. |
 
 The traffic light that is visible and faces the camera (light "C", on the right
 island) governs the left approach and its stop line. On the samples, 97–98 % of
