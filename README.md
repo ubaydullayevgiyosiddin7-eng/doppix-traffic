@@ -180,6 +180,10 @@ the unmodified harness on an RTX 3060 + i9-12900F, all 4 sample videos:
 | C3902 | 318 s | 276 s | 335 s | 612 s | 1.92 |
 | C3905 | 128 s | 103 s | 130 s | 233 s | 1.83 |
 
+Limited to 8 CPU threads, as on the evaluation machine (`start /affinity FF`), C3905 took 177 s = **1.39×** its duration.
+
+`predictions_samples.json` is the output of the final commit through the unmodified harness. Its events match, event for event, the ones computed from our cached perception.
+
 Most of the time goes to decoding the 4K 10-bit 4:2:2 frames on the CPU. The
 harness decodes every frame again for Part B.
 

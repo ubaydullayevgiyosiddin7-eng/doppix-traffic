@@ -132086,33 +132086,33 @@
    "duration": 340.34,
    "budget_sec": 1021.0,
    "errors": [],
-   "part_a_sec": 267.6,
-   "part_b_sec": 349.8,
-   "total_sec": 617.4
+   "part_a_sec": 275.5,
+   "part_b_sec": 414.4,
+   "total_sec": 689.9
   },
   "C3897.MP4": {
    "duration": 317.82,
    "budget_sec": 953.5,
    "errors": [],
-   "part_a_sec": 264.4,
-   "part_b_sec": 310.1,
-   "total_sec": 574.5
+   "part_a_sec": 268.0,
+   "part_b_sec": 328.0,
+   "total_sec": 596.1
   },
   "C3902.MP4": {
    "duration": 317.82,
    "budget_sec": 953.5,
    "errors": [],
-   "part_a_sec": 276.3,
-   "part_b_sec": 335.2,
-   "total_sec": 611.5
+   "part_a_sec": 282.8,
+   "part_b_sec": 336.0,
+   "total_sec": 618.8
   },
   "C3905.MP4": {
    "duration": 127.63,
    "budget_sec": 382.9,
    "errors": [],
-   "part_a_sec": 103.3,
-   "part_b_sec": 129.8,
-   "total_sec": 233.1
+   "part_a_sec": 115.6,
+   "part_b_sec": 129.7,
+   "total_sec": 245.3
   }
  }
 }
