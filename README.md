@@ -160,6 +160,7 @@ cp runs/detect/<run>/weights/best.pt weights/detector.pt
 * Training: YOLO26m, COCO-pretrained. imgsz 1280, 100 epochs (patience 30), batch 8, `seed=42, deterministic=True`. Augmentation: horizontal flip only; no vertical flip, rotation or perspective, because the camera is fixed. One RTX 3060 run takes about 7 h.
 * Best epoch 89. Validation: mAP@50 0.978, mAP@50-95 0.885. Per class (mAP@50-95): car 0.95, light_red 0.95, bus 0.87, light_not_red 0.87, truck 0.86, person 0.82.
 * `train_detector.py` also re-evaluates the stock COCO YOLO26m on the same val split as a baseline.
+* Full training log, curves and confusion matrix: [`training/results/`](training/results/).
 
 ## Determinism
 
