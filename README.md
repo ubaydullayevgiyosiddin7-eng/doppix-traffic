@@ -22,6 +22,7 @@ python evaluate.py --pred predictions.json --validate-only
 
 * Weights are in the repo: `weights/detector.pt` (YOLO26m fine-tune, ~44 MB). No internet needed at run time.
 * GPU is used automatically when available (fp16), CPU works but is slow.
+* `ultralytics` is pinned to the exact version we tested (8.4.163).
 * `run_submission.py` and `evaluate.py` are the unmodified organizer files.
 * `predictions_samples.json` — our output on the 4 sample videos.
 
@@ -95,7 +96,7 @@ thresholds are for the 1920-px frame.
 | `stop_line` | a vehicle stands still on/over the stop line for ≥ 3 s |
 | `stopped_vehicle` | a single vehicle is stationary for ≥ 10 s on the carriageway, outside a queue |
 | `congestion` | ≥ 3 stationary vehicles in the intersection approach at once, for ≥ 8 s |
-| `jaywalking` | a moving pedestrian on the carriageway for ≥ 1 s who is more than 60 px from any crosswalk and not on an island. Riders on bikes or motorcycles are excluded, as are tiny far-away people (box height < 45 px). |
+| `jaywalking` | a moving pedestrian on the carriageway for ≥ 1 s who is more than 60 px from any crosswalk and not on an island. Riders on bikes or motorcycles are excluded, as are tiny far-away people (box height < 45 px). Walking across an island does not break a crossing into two events, but walking only on an island is not an event. |
 | `failure_to_yield` | a moving vehicle is inside a crosswalk (0.5–8 s) while a pedestrian on that crosswalk is **in its path**: ahead of it along its velocity and laterally within its width |
 
 The traffic light that is visible and faces the camera (light "C", on the right

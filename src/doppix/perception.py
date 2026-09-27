@@ -87,7 +87,7 @@ def run(video_path: str, stride_sec: float = config.PART_A_STRIDE_SEC, progress=
     if limit is not None and n_frames > 0:
         n_frames = min(n_frames, limit)
     stride = max(1, round(stride_sec * fps))
-    half_kw = {"half": True} if dev != "cpu" else {}   # GPU'da fp16 — ~2x tez
+    half_kw = {"quantize": 16} if dev != "cpu" else {}   # GPU'da fp16 — ~2x tez
 
     # ByteTrack holati har video uchun yangidan boshlanadi
     if getattr(model, "predictor", None) is not None and hasattr(model.predictor, "trackers"):

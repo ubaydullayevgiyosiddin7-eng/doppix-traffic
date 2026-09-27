@@ -85,7 +85,7 @@ class RiskModel:
         dev = 0 if torch.cuda.is_available() else "cpu"
         res = self.model.track(frame, persist=True, tracker=str(config.TRACKER_CFG), imgsz=config.IMGSZ,
                                conf=config.DET_CONF, device=dev, verbose=False,
-                               classes=[config.PERSON, *config.VEHICLES], **({"half": True} if dev != "cpu" else {}))[0]
+                               classes=[config.PERSON, *config.VEHICLES], **({"quantize": 16} if dev != "cpu" else {}))[0]
         b = res.boxes
         objs = []
         if b is not None and len(b) and b.id is not None:

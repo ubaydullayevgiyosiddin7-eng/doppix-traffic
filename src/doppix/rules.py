@@ -22,6 +22,7 @@ P = {
     "move_speed": 25.0,          # px/s dan tez — "yuryapti"
     # jaywalking
     "jw_min_sec": 1.0,
+    "jw_core_sec": 0.5,          # orolcha orqali o'tganda ham qatnov qismining o'zida kamida shuncha s
     "jw_cross_margin": 60.0,     # zebradan ~1 mashina kengligi uzoqda bo'lsin (zebra cheti hisoblanmaydi)
     "jw_road_margin": 15.0,      # yo'l chegarasidan shuncha px ichkarida
     "jw_min_height": 45.0,       # box balandligi shundan kichik (juda uzoqdagi) odam hisobga olinmaydi
@@ -93,7 +94,16 @@ def jaywalking(ctx: Ctx):
         off_cross = ~inside_any(ctx.scene.crosswalks, f, -P["jw_cross_margin"])
         moving = tr.speed() > P["move_speed"] * 0.6
         not_rider = np.array([not _is_rider(riders, t, x) for t, x in zip(tr.t, f)])
-        out += _runs(tr, on_road & off_cross & moving & not_rider, P["jw_min_sec"])
+        core = on_road & off_cross & moving & not_rider
+        # orolcha ustidan yurib o'tish kesib o'tishni ikkiga bo'lmasin: u "ko'prik" — o'zi hodisa emas,
+        # lekin ikki tomonidagi yo'l qismlarini bitta hodisaga ulaydi
+        bridge = inside_any(ctx.scene.islands, f) & moving & (tr.height >= P["jw_min_height"]) if ctx.scene.islands \
+            else np.zeros(len(f), bool)
+        for s, e in merge(mask_to_intervals(tr.t, core | bridge), 1.0):
+            tc = tr.t[(tr.t >= s) & (tr.t <= e) & core]
+            # faqat orolchada yurish — hodisa emas: yo'lning o'zida ham kamida jw_core_sec bo'lsin
+            if e - s >= P["jw_min_sec"] and len(tc) and tc[-1] - tc[0] >= P["jw_core_sec"]:
+                out.append((s, e))
     return out
 
 
