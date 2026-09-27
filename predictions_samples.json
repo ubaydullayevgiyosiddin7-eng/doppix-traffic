@@ -54,11 +54,6 @@
      "jaywalking"
     ],
     [
-     194.094,
-     199.599,
-     "failure_to_yield"
-    ],
-    [
      200.6,
      217.217,
      "stopped_vehicle"
@@ -40410,29 +40405,14 @@
      "jaywalking"
     ],
     [
-     174.374,
-     175.175,
-     "failure_to_yield"
-    ],
-    [
-     176.176,
-     180.18,
-     "failure_to_yield"
-    ],
-    [
-     180.68,
-     182.382,
+     177.277,
+     178.178,
      "failure_to_yield"
     ],
     [
      193.994,
      204.004,
      "stopped_vehicle"
-    ],
-    [
-     196.997,
-     197.597,
-     "failure_to_yield"
     ],
     [
      211.111,
@@ -40455,31 +40435,6 @@
      "jaywalking"
     ],
     [
-     245.846,
-     247.147,
-     "failure_to_yield"
-    ],
-    [
-     250.45,
-     251.051,
-     "failure_to_yield"
-    ],
-    [
-     253.253,
-     254.054,
-     "failure_to_yield"
-    ],
-    [
-     256.056,
-     256.757,
-     "failure_to_yield"
-    ],
-    [
-     258.959,
-     259.76,
-     "failure_to_yield"
-    ],
-    [
      263.764,
      267.267,
      "jaywalking"
@@ -40488,21 +40443,6 @@
      266.366,
      284.384,
      "stopped_vehicle"
-    ],
-    [
-     272.272,
-     273.473,
-     "jaywalking"
-    ],
-    [
-     275.575,
-     276.776,
-     "jaywalking"
-    ],
-    [
-     279.679,
-     280.18,
-     "failure_to_yield"
     ],
     [
      295.896,
@@ -78646,37 +78586,12 @@
      "failure_to_yield"
     ],
     [
-     41.241,
-     41.842,
-     "failure_to_yield"
-    ],
-    [
-     43.343,
-     44.044,
-     "failure_to_yield"
-    ],
-    [
-     45.746,
-     46.446,
-     "failure_to_yield"
-    ],
-    [
-     47.848,
-     48.649,
-     "failure_to_yield"
-    ],
-    [
      48.549,
      55.055,
      "jaywalking"
     ],
     [
-     50.45,
-     51.552,
-     "failure_to_yield"
-    ],
-    [
-     52.653,
+     52.753,
      54.054,
      "failure_to_yield"
     ],
@@ -78684,11 +78599,6 @@
      54.154,
      81.982,
      "stopped_vehicle"
-    ],
-    [
-     74.074,
-     76.376,
-     "failure_to_yield"
     ],
     [
      79.379,
@@ -78751,16 +78661,6 @@
      "jaywalking"
     ],
     [
-     201.101,
-     201.702,
-     "failure_to_yield"
-    ],
-    [
-     202.602,
-     203.103,
-     "failure_to_yield"
-    ],
-    [
      219.419,
      221.621,
      "jaywalking"
@@ -78774,11 +78674,6 @@
      259.659,
      274.174,
      "jaywalking"
-    ],
-    [
-     270.17,
-     270.67,
-     "failure_to_yield"
     ],
     [
      280.28,
@@ -116927,11 +116822,6 @@
      "failure_to_yield"
     ],
     [
-     54.254,
-     55.255,
-     "jaywalking"
-    ],
-    [
      59.459,
      61.562,
      "failure_to_yield"
@@ -116974,31 +116864,6 @@
     [
      110.41,
      110.911,
-     "failure_to_yield"
-    ],
-    [
-     114.314,
-     114.815,
-     "failure_to_yield"
-    ],
-    [
-     116.016,
-     116.516,
-     "failure_to_yield"
-    ],
-    [
-     117.217,
-     119.92,
-     "failure_to_yield"
-    ],
-    [
-     121.722,
-     122.923,
-     "failure_to_yield"
-    ],
-    [
-     125.225,
-     127.027,
      "failure_to_yield"
     ]
    ],

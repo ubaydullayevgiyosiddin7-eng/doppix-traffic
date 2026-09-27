@@ -23,6 +23,7 @@ P = {
     # jaywalking
     "jw_min_sec": 1.0,
     "jw_core_sec": 0.5,          # orolcha orqali o'tganda ham qatnov qismining o'zida kamida shuncha s
+    "ped_max_rel_speed": 2.0,    # bo'y/s: piyoda ~0.3-1, samokat/skuterdagi odam 2.5+ (detektorda samokat klassi yo'q)
     "jw_cross_margin": 60.0,     # zebradan ~1 mashina kengligi uzoqda bo'lsin (zebra cheti hisoblanmaydi)
     "jw_road_margin": 15.0,      # yo'l chegarasidan shuncha px ichkarida
     "jw_min_height": 45.0,       # box balandligi shundan kichik (juda uzoqdagi) odam hisobga olinmaydi
@@ -32,6 +33,11 @@ P = {
     "fty_lat_approach": 120.0,   # yo'lga qarab kelayotgan piyoda uchun kengroq oraliq
     "fty_approach_speed": 20.0,  # px/s — piyoda yo'lga qarab shundan tez yursa
     "fty_min_sec": 0.5,
+    "fty_ped_margin": -10.0,     # piyoda zebra ichida (musbat — chetidan shuncha px ichkarida)
+    "fty_ped_min_rel": 0.3,      # bo'y/s: piyoda yurib ketayotgan bo'lsin (yo'l o'rtasida/chetda kutib turgan emas)
+    "fty_min_hits": 1,           # "yo'lida" holati kamida shuncha kadrda
+    "fty_signal_cw": (0,),       # svetofor C boshqaradigan zebra(lar): bu yerda faqat mashinaga QIZIL paytida
+    "fty_red_guard": 2.0,        # qizil yonganidan keyin shuncha s — piyoda svetofori ~2 s farq bilan almashadi
     "fty_max_sec": 8.0,
     # stopped_vehicle / congestion
     "sv_min_sec": 10.0,
@@ -99,12 +105,19 @@ def jaywalking(ctx: Ctx):
         # lekin ikki tomonidagi yo'l qismlarini bitta hodisaga ulaydi
         bridge = inside_any(ctx.scene.islands, f) & moving & (tr.height >= P["jw_min_height"]) if ctx.scene.islands \
             else np.zeros(len(f), bool)
+        rel = _rel_speed(tr)
         for s, e in merge(mask_to_intervals(tr.t, core | bridge), 1.0):
-            tc = tr.t[(tr.t >= s) & (tr.t <= e) & core]
+            m = (tr.t >= s) & (tr.t <= e)
+            tc = tr.t[m & core]
             # faqat orolchada yurish — hodisa emas: yo'lning o'zida ham kamida jw_core_sec bo'lsin
-            if e - s >= P["jw_min_sec"] and len(tc) and tc[-1] - tc[0] >= P["jw_core_sec"]:
+            if e - s >= P["jw_min_sec"] and len(tc) and tc[-1] - tc[0] >= P["jw_core_sec"]                     and np.median(rel[m]) <= P["ped_max_rel_speed"]:     # samokatchi — piyoda emas
                 out.append((s, e))
     return out
+
+
+def _rel_speed(tr: Track) -> np.ndarray:
+    """Tezlik box balandligiga nisbatan (bo'y/s) — kameradan uzoq-yaqinlikka bog'liq emas."""
+    return tr.speed() / np.maximum(tr.height, 1.0)
 
 
 def _velocity(tr: Track, window: float = 0.5) -> np.ndarray:
@@ -143,6 +156,15 @@ def _in_path(vc, vv, vbox, pf, pv) -> bool:
     return abs(lat) <= half_w + P["fty_lat_approach"] and lat_speed > P["fty_approach_speed"]
 
 
+def _red_for(ctx: Ctx, t: float, guard: float) -> bool:
+    """t paytida svetofor C qizil va qizil yonganiga kamida `guard` s bo'lgan."""
+    i = int(np.clip(np.searchsorted(ctx.times, t), 0, len(ctx.times) - 1))
+    if ctx.light[i] != 1:
+        return False
+    j = np.searchsorted(ctx.times, t - guard)
+    return bool(np.all(ctx.light[j:i + 1] == 1))
+
+
 def failure_to_yield(ctx: Ctx):
     """Mashina zebrani kesib o'tyapti, shu paytda zebrada piyoda uning YO'LIDA (oldida yoki yo'lga
     chiqib kelayotgan). Segment — mashina zebraga kirgan paytdan chiqqan paytgacha."""
@@ -150,7 +172,9 @@ def failure_to_yield(ctx: Ctx):
     persons = []
     for tr in ctx.by_cls((config.PERSON,)):
         f = tr.foot
-        on_cw = [inside(cw, f, -10) for cw in ctx.scene.crosswalks]
+        rel = _rel_speed(tr)
+        ok = (rel <= P["ped_max_rel_speed"]) & (rel >= P["fty_ped_min_rel"])
+        on_cw = [inside(cw, f, P["fty_ped_margin"]) & ok for cw in ctx.scene.crosswalks]
         persons.append((tr, f, _velocity(tr), on_cw))
     out = []
     for veh in ctx.by_cls(config.VEHICLES):
@@ -159,9 +183,12 @@ def failure_to_yield(ctx: Ctx):
         moving = np.linalg.norm(vv, axis=1) > P["move_speed"]
         for ci in range(len(ctx.scene.crosswalks)):
             for s, e in _runs(veh, in_cw_any[ci], 0.2, gap=0.5):
-                hit = False
+                hits = 0
                 for i in np.nonzero((veh.t >= s) & (veh.t <= e) & moving)[0]:
                     t = veh.t[i]
+                    # svetoforli zebra: mashinaga yashil bo'lsa yo'l huquqi mashinada (piyoda kechikkan/kutib turibdi)
+                    if ci in P["fty_signal_cw"] and not _red_for(ctx, t, P["fty_red_guard"]):
+                        continue
                     for tr, f, pv, on_cw in persons:
                         j = np.searchsorted(tr.t, t)
                         if j >= len(tr.t) or abs(tr.t[j] - t) > 0.05 or not on_cw[ci][j]:
@@ -169,10 +196,11 @@ def failure_to_yield(ctx: Ctx):
                         if _is_rider(riders, t, f[j]):
                             continue
                         if _in_path(vc[i], vv[i], veh.box[i], f[j], pv[j]):
-                            hit = True
+                            hits += 1
                             break
-                    if hit:
+                    if hits >= P["fty_min_hits"]:
                         break
+                hit = hits >= P["fty_min_hits"]
                 # zebradan o'tish bir necha soniya; uzoq turib qolish — bu stop_line/tirbandlik
                 if hit and P["fty_min_sec"] <= e - s <= P["fty_max_sec"]:
                     out.append((s, e))
