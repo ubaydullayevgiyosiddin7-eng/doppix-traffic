@@ -48,7 +48,8 @@ src/doppix/
   segments.py          mask → intervals, merging, clipping, same-class overlap removal
   risk.py              Part B: pairwise time-to-collision risk + calibration + causal smoothing
   zones.py             renders the scene zones (used by our labeling tool and the website)
-tools/                 development scripts (perception cache, dev evaluation, analyses)
+tools/                 development scripts (perception cache, dev evaluation, event review sheets, analyses)
+training/              detector training: train_detector.py, extract_frames.py, dataset labels
 ```
 
 ## Approach
@@ -147,6 +148,26 @@ Rules that came out of reviewing the errors:
 * Walking alongside a crosswalk, just off its painted edge, is not jaywalking.
 * A car stopped briefly for crossing pedestrians is not a stopped vehicle.
 
+## Training the detector (reproducible)
+
+```bash
+python training/extract_frames.py --videos /path/to/samples   # rebuilds the 214 labeled frames from the sample videos
+python training/train_detector.py --data training/dataset/data.yaml --epochs 100 --imgsz 1280 --batch 8
+cp runs/detect/<run>/weights/best.pt weights/detector.pt
+```
+
+* `training/dataset/labels/`: our own YOLO-format annotations. 214 frames (192 train / 22 val; the last 10 % of each video is val) with 12,990 boxes. The frames come from C3896 and C3905 and were labeled in our tool with model pre-labels and human review. The images are organizer footage, so the repo ships only the labels and the script that re-extracts the exact frames.
+* Training: YOLO26m, COCO-pretrained. imgsz 1280, 100 epochs (patience 30), batch 8, `seed=42, deterministic=True`. Augmentation: horizontal flip only; no vertical flip, rotation or perspective, because the camera is fixed. One RTX 3060 run takes about 7 h.
+* Best epoch 89. Validation: mAP@50 0.978, mAP@50-95 0.885. Per class (mAP@50-95): car 0.95, light_red 0.95, bus 0.87, light_not_red 0.87, truck 0.86, person 0.82.
+* `train_detector.py` also re-evaluates the stock COCO YOLO26m on the same val split as a baseline.
+
+## Determinism
+
+* `SEED = 42` (`src/doppix/config.py`) is set for `random`, `numpy` and `torch` before every video.
+* The detector runs in inference mode, and ByteTrack is deterministic for identical inputs.
+* No test-time augmentation and no sampling. All thresholds are constants in `config.py` / `rules.P` / `risk.py`.
+* One exception: the time-budget guard (see Runtime) samples frames more sparsely if a machine is much slower than ours. On our GPU it never triggers, so repeated runs give identical output.
+
 ## Runtime
 
 The budget is 3× the video duration for Part A + Part B together. Measured with
@@ -175,7 +196,7 @@ be slower than ours, so both parts watch their own speed:
 
 | Data | Use | Licence |
 |---|---|---|
-| Organizer sample videos (4 × ~5 min) | detector fine-tuning frames (self-labeled), rule tuning | provided for the hackathon |
+| Organizer sample videos (4 × ~5 min) | detector fine-tuning frames (self-labeled, `training/dataset`), rule tuning | provided for the hackathon |
 | COCO (via Ultralytics YOLO26m pretrained weights) | detector initialisation | CC BY 4.0 (annotations); weights AGPL-3.0 (Ultralytics) |
 
 No other footage from this camera was collected, and no external event datasets
