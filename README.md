@@ -125,7 +125,7 @@ the official `evaluate_part_a` run on our labels (`tools/dev_eval.py`).
 
 | Video | Status | Score A |
 |---|---|---|
-| C3896 (5:29) | fully reviewed | 0.83 |
+| C3896 (5:40) | fully reviewed | 0.82 (harness run with the final detector) |
 
 ⚠️ These labels were made by reviewing the pipeline's own suggestions
 (accept / fix boundaries / reject / add missed), so the score is optimistic. The
@@ -143,9 +143,27 @@ most errors come from tracking switches at crowded crosswalks).
 
 ## Runtime
 
-The budget is 3× video duration for Part A + Part B together on a T4. Part A decodes
-every frame and runs the detector at ~10 fps. Part B runs the detector at ~5 fps.
-Measured on an RTX 3060: *TBD* × real time.
+The budget is 3× the video duration for Part A + Part B together. Measured with
+the unmodified harness on an RTX 3060 + i9-12900F, all 4 sample videos:
+
+| Video | Length | Part A | Part B | Total | × duration |
+|---|---|---|---|---|---|
+| C3896 | 340 s | 325 s | 416 s | 741 s | 2.18 |
+| C3897 | 318 s | 293 s | 325 s | 619 s | 1.95 |
+| C3902 | 318 s | 288 s | 344 s | 632 s | 1.99 |
+| C3905 | 128 s | 120 s | 134 s | 254 s | 1.99 |
+
+Most of the time goes to decoding the 4K 10-bit 4:2:2 frames on the CPU. The
+harness decodes every frame again for Part B.
+
+**Time-budget guard.** A video over budget scores zero, and the test machine may
+be slower than ours, so both parts watch their own speed:
+
+* Part A: every 10 processed frames it projects the finish time. If the projection
+  exceeds 1.3× the duration, the frame stride doubles, up to 8×.
+* Part B: the deadline is counted from the start of Part A. If the projection
+  exceeds 90 % of the 3× budget, the detector stride doubles. As a last resort the
+  detector switches off and the last score is returned.
 
 ## Datasets and licences
 
