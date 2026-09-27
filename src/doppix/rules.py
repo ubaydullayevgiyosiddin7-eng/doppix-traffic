@@ -12,13 +12,14 @@ import numpy as np
 
 from . import config
 from .perception import Perception
-from .scene import Scene, inside, inside_any, side_of_line
+from .scene import H, Scene, inside, inside_any, side_of_line
 from .segments import finalize, mask_to_intervals, merge
 from .tracks import Track, build_tracks, light_state
 
 P = {
     # umumiy
     "stop_speed": 12.0,          # px/s dan sekin — "turibdi"
+    "edge_px": 12.0,             # box kadr pastki chetiga shuncha px yaqin — kesilgan (oyog'i ko'rinmaydi)
     "move_speed": 25.0,          # px/s dan tez — "yuryapti"
     # jaywalking
     "jw_min_sec": 1.0,
@@ -96,7 +97,9 @@ def jaywalking(ctx: Ctx):
     out = []
     for tr in ctx.by_cls((config.PERSON,)):
         f = tr.foot
-        on_road = ctx.scene.on_road(f, P["jw_road_margin"]) & (tr.height >= P["jw_min_height"])
+        # kadr pastki chetida kesilgan odam: box pasti — oyoq emas, kadr cheti (joylashuv noto'g'ri)
+        whole = tr.box[:, 3] < H - P["edge_px"]
+        on_road = ctx.scene.on_road(f, P["jw_road_margin"]) & (tr.height >= P["jw_min_height"]) & whole
         off_cross = ~inside_any(ctx.scene.crosswalks, f, -P["jw_cross_margin"])
         moving = tr.speed() > P["move_speed"] * 0.6
         not_rider = np.array([not _is_rider(riders, t, x) for t, x in zip(tr.t, f)])
