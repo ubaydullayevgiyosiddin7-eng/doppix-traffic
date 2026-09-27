@@ -6,7 +6,7 @@ Pikselli qiymatlar FRAME_W=1920 kadr uchun.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 
@@ -66,6 +66,10 @@ class Ctx:
     tracks: list[Track]
     light: np.ndarray            # har qayta ishlangan kadr: 1 qizil, 0 qizil emas, -1 noma'lum
     times: np.ndarray
+    who: list = field(default_factory=list)   # (klass, boshi, oxiri, {trek id}) — hodisa ishtirokchilari (sayt uchun)
+
+    def mark(self, label: str, s: float, e: float, *tids) -> None:
+        self.who.append((label, float(s), float(e), {int(t) for t in tids}))
 
     def light_at(self, t: float) -> float:
         i = int(np.clip(np.searchsorted(self.times, t), 0, len(self.times) - 1))
@@ -121,6 +125,7 @@ def jaywalking(ctx: Ctx):
             # faqat orolchada yurish — hodisa emas: yo'lning o'zida ham kamida jw_core_sec bo'lsin
             if e - s >= P["jw_min_sec"] and len(tc) and tc[-1] - tc[0] >= P["jw_core_sec"]                     and np.median(rel[m]) <= P["ped_max_rel_speed"]                     and _along_share(ctx.scene.crosswalks, tr, m) <= P["jw_along_max"]:
                 out.append((s, e))
+                ctx.mark("jaywalking", s, e, tr.tid)
     return out
 
 
@@ -212,7 +217,7 @@ def failure_to_yield(ctx: Ctx):
         moving = np.linalg.norm(vv, axis=1) > P["move_speed"]
         for ci in range(len(ctx.scene.crosswalks)):
             for s, e in _runs(veh, in_cw_any[ci], 0.2, gap=0.5):
-                hits = 0
+                hits, ped = 0, None
                 for i in np.nonzero((veh.t >= s) & (veh.t <= e) & moving)[0]:
                     t = veh.t[i]
                     # svetoforli zebra: mashinaga yashil bo'lsa yo'l huquqi mashinada (piyoda kechikkan/kutib turibdi)
@@ -229,6 +234,7 @@ def failure_to_yield(ctx: Ctx):
                             continue
                         if _in_path(vc[i], vv[i], veh.box[i], f[j], pv[j]):
                             hits += 1
+                            ped = tr.tid
                             break
                     if hits >= P["fty_min_hits"]:
                         break
@@ -236,6 +242,7 @@ def failure_to_yield(ctx: Ctx):
                 # zebradan o'tish bir necha soniya; uzoq turib qolish — bu stop_line/tirbandlik
                 if hit and P["fty_min_sec"] <= e - s <= P["fty_max_sec"]:
                     out.append((s, e))
+                    ctx.mark("failure_to_yield", s, e, veh.tid, *([ped] if ped is not None else []))
     return out
 
 
@@ -270,6 +277,8 @@ def congestion_and_stopped(ctx: Ctx):
         count += (times >= s) & (times <= e)
     cong = [(s, e) for s, e in merge(mask_to_intervals(times, count >= P["cg_min_vehicles"]), 2.0)
             if e - s >= P["cg_min_sec"]]
+    for cs, ce in cong:
+        ctx.mark("congestion", cs, ce, *[v.tid for v, s, e in stops if s < ce and e > cs])
     single = []
     peds = None
     for veh, s, e in stops:
@@ -283,6 +292,7 @@ def congestion_and_stopped(ctx: Ctx):
             if _yield_share(veh, s, e, peds) >= P["sv_yield_share"]:
                 continue                        # piyodalarga yo'l berib kutyapti
         single.append((s, e))
+        ctx.mark("stopped_vehicle", s, e, veh.tid)
     return cong, single
 
 
@@ -333,6 +343,7 @@ def stop_line(ctx: Ctx):
             later = ctx.times[(ctx.times > s) & (ctx.light == 0)]
             green = later[0] if len(later) else e
             out.append((s, max(e, min(green, e + 60))))
+            ctx.mark("stop_line", *out[-1], veh.tid)
     return out
 
 
@@ -358,6 +369,7 @@ def red_light(ctx: Ctx):
             if len(changes) and np.min(np.abs(changes - t)) < P["rl_phase_guard"]:
                 continue
             out.append((t, min(veh.t[-1], t + P["rl_max_sec"])))
+            ctx.mark("red_light", *out[-1], veh.tid)
     return out
 
 
@@ -373,7 +385,9 @@ def aligned_scene(p: Perception, scene: Scene | None = None) -> Scene:
     return scene.transformed(estimate(ref, p.bg))
 
 
-def detect(p: Perception, scene: Scene | None = None) -> list[list]:
+def detect(p: Perception, scene: Scene | None = None, detail: bool = False):
+    """Hodisalar [[boshi, oxiri, klass], ...]. detail=True — qo'shimcha har hodisaning ishtirokchi trek
+    id'lari (saytdagi videoda ajratib ko'rsatish uchun; topshiriq natijasiga ta'sir qilmaydi)."""
     scene = aligned_scene(p, scene)
     ctx = Ctx(p, scene, build_tracks(p), light_state(p, scene), p.times)
     dur = p.duration
@@ -390,4 +404,9 @@ def detect(p: Perception, scene: Scene | None = None) -> list[list]:
     add("stopped_vehicle", single, min_len=P["sv_min_sec"], gap=2.0)
     add("stop_line", stop_line(ctx), min_len=P["sl_min_sec"], gap=2.0)
     add("red_light", red_light(ctx), min_len=0.5, gap=0.5)
-    return sorted(events)
+    events = sorted(events)
+    if not detail:
+        return events
+    involved = [sorted(set().union(*[w[3] for w in ctx.who if w[0] == lab and w[1] < e and w[2] > s]))
+                for s, e, lab in events]
+    return events, involved
