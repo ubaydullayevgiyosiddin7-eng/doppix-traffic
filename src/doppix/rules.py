@@ -38,8 +38,9 @@ P = {
     "fty_approach_speed": 20.0,  # px/s — piyoda yo'lga qarab shundan tez yursa
     "fty_min_sec": 0.5,
     "fty_ped_margin": -10.0,     # piyoda zebra ichida (musbat — chetidan shuncha px ichkarida)
-    "fty_ped_min_rel": 0.3,      # bo'y/s: piyoda yurib ketayotgan bo'lsin (yo'l o'rtasida/chetda kutib turgan emas)
+    "fty_ped_min_rel": 0.4,      # bo'y/s: piyoda yurib ketayotgan bo'lsin (yo'l o'rtasida/chetda kutib turgan emas)
     "fty_min_hits": 1,           # "yo'lida" holati kamida shuncha kadrda
+    "fty_veh_min_rel": 0.3,      # mashina tezligi (o'z uzunligi/s) shundan past — sekin siljib kutyapti, yo'l bermoqda
     "fty_signal_cw": (0,),       # svetofor C boshqaradigan zebra(lar): bu yerda faqat mashinaga QIZIL paytida
     "fty_red_guard": 2.0,        # qizil yonganidan keyin shuncha s — piyoda svetofori ~2 s farq bilan almashadi
     "fty_max_sec": 8.0,
@@ -216,6 +217,9 @@ def failure_to_yield(ctx: Ctx):
                     t = veh.t[i]
                     # svetoforli zebra: mashinaga yashil bo'lsa yo'l huquqi mashinada (piyoda kechikkan/kutib turibdi)
                     if ci in P["fty_signal_cw"] and not _red_for(ctx, t, P["fty_red_guard"]):
+                        continue
+                    b = veh.box[i]
+                    if np.linalg.norm(vv[i]) / max(np.hypot(b[2] - b[0], b[3] - b[1]), 1.0) < P["fty_veh_min_rel"]:
                         continue
                     for tr, f, pv, on_cw in persons:
                         j = np.searchsorted(tr.t, t)

@@ -120,26 +120,32 @@ are costly under macro-F1. Part B covers the accident case.
 
 ## Results on the sample videos
 
-We labeled the samples ourselves in our labeling tool. Our development metric is
-the official `evaluate_part_a` run on our labels (`tools/dev_eval.py`).
+We labeled all four sample videos ourselves in our labeling tool. Each video was
+reviewed chunk by chunk: we accepted or rejected every pipeline suggestion and
+added the events the pipeline missed. The official `evaluate_part_a` on these labels
+(`tools/dev_eval.py`) gives:
 
-| Video | Status | Score A |
-|---|---|---|
-| C3896 (5:40) | fully reviewed | 0.80 (`predictions_samples.json` vs our labels) |
+| Class | F1 (mean over tIoU 0.3/0.5/0.7) |
+|---|---|
+| red_light | 1.00 |
+| stop_line | 0.92 |
+| congestion | 0.90 |
+| stopped_vehicle | 0.81 |
+| jaywalking | 0.70 |
+| failure_to_yield | 0.64 |
+| **Score A (4 videos)** | **0.83** |
 
-⚠️ These labels were made by reviewing the pipeline's own suggestions
-(accept / fix boundaries / reject / add missed), so the score is optimistic. The
-remaining videos are still being reviewed. The per-class breakdown is in
-`tools/dev_eval.py -v`.
+⚠️ This score is optimistic. The labels started from the pipeline's own suggestions,
+and the thresholds were tuned on the same four videos.
 
-Weakest classes: `failure_to_yield` and `jaywalking` (short, ambiguous events;
-most errors come from tracking switches at crowded crosswalks).
+Rules that came out of reviewing the errors:
 
-## Determinism
-
-* `SEED = 42` (`src/doppix/config.py`) is set for `random`, `numpy` and `torch` before every video.
-* The detector runs in inference mode, and ByteTrack is deterministic for identical inputs.
-* No test-time augmentation and no sampling. All thresholds are constants in `config.py` / `rules.P` / `risk.py`.
+* Pedestrian and vehicle signals switch about 2 s apart. On the signalised crosswalk, failure_to_yield is counted only while the vehicle light is red.
+* A car creeping (< 0.3 car lengths/s) past walking pedestrians is giving way, not failing to yield.
+* A person faster than 2 body heights/s is on a scooter, not a pedestrian.
+* People cut off by the bottom frame edge are ignored: their feet are not visible.
+* Walking alongside a crosswalk, just off its painted edge, is not jaywalking.
+* A car stopped briefly for crossing pedestrians is not a stopped vehicle.
 
 ## Runtime
 

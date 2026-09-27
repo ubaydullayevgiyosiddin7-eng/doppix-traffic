@@ -40355,11 +40355,6 @@
      "jaywalking"
     ],
     [
-     92.693,
-     93.794,
-     "failure_to_yield"
-    ],
-    [
      129.129,
      137.638,
      "congestion"
@@ -78571,11 +78566,6 @@
      "failure_to_yield"
     ],
     [
-     52.753,
-     54.054,
-     "failure_to_yield"
-    ],
-    [
      54.154,
      81.982,
      "stopped_vehicle"
@@ -78626,11 +78616,6 @@
      "jaywalking"
     ],
     [
-     284.985,
-     286.686,
-     "failure_to_yield"
-    ],
-    [
      287.888,
      289.389,
      "jaywalking"
@@ -78644,11 +78629,6 @@
      298.899,
      309.209,
      "stopped_vehicle"
-    ],
-    [
-     304.704,
-     306.506,
-     "failure_to_yield"
     ]
    ],
    "risk": [
@@ -116767,11 +116747,6 @@
      "failure_to_yield"
     ],
     [
-     59.459,
-     61.562,
-     "failure_to_yield"
-    ],
-    [
      68.068,
      78.278,
      "stopped_vehicle"
@@ -116799,16 +116774,6 @@
     [
      99.7,
      100.701,
-     "failure_to_yield"
-    ],
-    [
-     107.908,
-     108.608,
-     "failure_to_yield"
-    ],
-    [
-     110.41,
-     110.911,
      "failure_to_yield"
     ]
    ],
